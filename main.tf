@@ -183,7 +183,7 @@ module "ecs_service" {
 ################################################################################
 
 module "ecs_task_definition" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules/modules/service.git?ref=main"
+  source = "git::https://github.com/sarabbrainridge/terraform-modules.git/modules/service?ref=main"
 
   # Service
   name           = "${local.name}-standalone"
