@@ -26,7 +26,7 @@ locals {
 ################################################################################
 
 module "ecs_cluster" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules/modules/cluster.git?ref=main"
+  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   //source = "../../modules/cluster"
 
   cluster_name = local.name
@@ -54,7 +54,7 @@ module "ecs_cluster" {
 ################################################################################
 
 module "ecs_service" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules/modules/service.git?ref=main"
+  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
 
   name        = local.name
   cluster_arn = module.ecs_cluster.arn
