@@ -1,4 +1,4 @@
-# ECS Clusters w/ Fargate
+# ECS Clusters with Fargate
 
 Configuration in this directory creates:
 
