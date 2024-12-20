@@ -26,8 +26,8 @@ locals {
 ################################################################################
 
 module "ecs_cluster" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
-  //source = "../../modules/cluster"
+  #source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
+  source = "./modules/cluster"
 
   cluster_name = local.name
 
@@ -54,7 +54,8 @@ module "ecs_cluster" {
 ################################################################################
 
 module "ecs_service" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  #source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  source = "./modules/service"
 
   name        = local.name
   cluster_arn = module.ecs_cluster.arn
@@ -183,7 +184,8 @@ module "ecs_service" {
 ################################################################################
 
 module "ecs_task_definition" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  #source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  source = "./modules/service"
 
   # Service
   name           = "${local.name}-standalone"
