@@ -20,9 +20,10 @@ locals {
   linux_parameters = var.enable_execute_command ? merge({ "initProcessEnabled" : true }, var.linux_parameters) : merge({ "initProcessEnabled" : false }, var.linux_parameters)
 
   health_check = length(var.health_check) > 0 ? merge({
-    interval = 30,
-    retries  = 3,
-    timeout  = 5
+    interval = 20,
+    retries  = 2,
+    start_period = 30,
+    timeout  = 10
   }, var.health_check) : null
 
   definition = {
