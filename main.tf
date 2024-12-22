@@ -7,18 +7,16 @@ data "aws_availability_zones" "available" {}
 
 locals {
   region = "ca-central-1"
-  name   = "ex-${basename(path.cwd)}"
+  name   = "ecs-${basename(path.cwd)}-${var.env}-${var.region_short_name}"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
   container_name = "ecsdemo-frontend"
   container_port = 3000
-
   tags = {
     Name       = local.name
     Example    = local.name
-    Repository = "https://github.com/terraform-aws-modules/terraform-aws-ecs"
   }
 }
 
@@ -27,8 +25,8 @@ locals {
 ################################################################################
 
 module "ecs_cluster" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
-  //source = "../../modules/cluster"
+  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
+  source = "../modules/cluster"
 
   cluster_name = local.name
 
@@ -55,8 +53,8 @@ module "ecs_cluster" {
 ################################################################################
 
 module "ecs_service" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
-
+  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  source = "../modules/service"
   name        = local.name
   cluster_arn = module.ecs_cluster.arn
 
@@ -184,8 +182,8 @@ module "ecs_service" {
 ################################################################################
 
 module "ecs_task_definition" {
-  source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
-
+  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
+  source = "../modules/service"
   # Service
   name           = "${local.name}-standalone"
   cluster_arn    = module.ecs_cluster.arn
