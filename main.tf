@@ -5,7 +5,7 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
-locals {
+/* locals {
   region = "ca-central-1"
   name   = "ecs-${basename(path.cwd)}-${var.env}-${var.region_short_name}"
 
@@ -24,7 +24,7 @@ locals {
 # Cluster
 ################################################################################
 
-/* module "ecs_cluster" {
+ module "ecs_cluster" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   source = "./modules/cluster"
 

@@ -2,7 +2,7 @@
 # Cluster
 ################################################################################
 
-output "cluster_arn" {
+/*output "cluster_arn" {
   description = "ARN that identifies the cluster"
   value       = module.ecs_cluster.arn
 }
@@ -163,4 +163,4 @@ output "task_definition_run_task_command" {
       --network-configuration "awsvpcConfiguration={subnets=[${join(",", module.vpc.private_subnets)}],securityGroups=[${module.ecs_task_definition.security_group_id}]}" \
       --region ${local.region}
   EOT
-}
+} */
