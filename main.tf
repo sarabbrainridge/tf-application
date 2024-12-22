@@ -222,10 +222,14 @@ module "ecs_task_definition" {
     craft_cms_container = {
       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
+      health_check = "CMD-SHELL,curl -f http://localhost:8080/ || exit 1"
+
       port_mappings = [
         {
           containerPort = 8080
           hostPort      = 8080
+          name          = "craftcms-8080-tcp"
+          protocol      = "tcp"
         }
       ]
 
