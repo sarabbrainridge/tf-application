@@ -198,6 +198,11 @@ module "ecs_task_definition" {
   cluster_arn    = module.ecs_cluster.arn
   create_service = false
 
+  tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
+
+  task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
+
+
   # Task Definition
   volume = {
     ex-vol = {}
@@ -210,7 +215,7 @@ module "ecs_task_definition" {
 
   # Container definition(s)
   container_definitions = {
-    al2023 = {
+    craft_cms_container = {
       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
       mount_points = [
