@@ -222,15 +222,22 @@ module "ecs_task_definition" {
     craft_cms_container = {
       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
-      mount_points = [
+      portMappings = [
         {
-          sourceVolume  = "ex-vol",
-          containerPath = "/var/www/ex-vol"
+          containerPort = 8080
+          hostPort      = 8080
         }
       ]
 
-      command    = ["echo hello world"]
-      entrypoint = ["/usr/bin/sh", "-c"]
+      # mount_points = [
+      #   {
+      #     sourceVolume  = "ex-vol",
+      #     containerPath = "/var/www/ex-vol"
+      #   }
+      # ]
+
+      # command    = ["echo hello world"]
+      # entrypoint = ["/usr/bin/sh", "-c"]
     }
   }
 
