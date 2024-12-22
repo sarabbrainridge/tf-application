@@ -87,7 +87,7 @@ module "ecs_service" {
       cpu       = 512
       memory    = 1024
       essential = true
-      image     = "public.ecr.aws/aws-containers/ecsdemo-frontend:776fd50"
+      image     = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
       port_mappings = [
         {
           name          = local.container_name
@@ -254,6 +254,8 @@ module "alb" {
   version = "~> 9.0"
 
   name = local.name
+
+  internal = true
 
   load_balancer_type = "application"
 
