@@ -76,17 +76,17 @@ module "ecs_service" {
   # Container definition(s)
   container_definitions = {
 
-    fluent-bit = {
-      cpu       = 512
-      memory    = 1024
-      essential = true
-      image     = nonsensitive(data.aws_ssm_parameter.fluentbit.value)
-      firelens_configuration = {
-        type = "fluentbit"
-      }
-      memory_reservation = 50
-      user               = "0"
-    }
+    # fluent-bit = {
+    #   cpu       = 512
+    #   memory    = 1024
+    #   essential = true
+    #   image     = nonsensitive(data.aws_ssm_parameter.fluentbit.value)
+    #   firelens_configuration = {
+    #     type = "fluentbit"
+    #   }
+    #   memory_reservation = 50
+    #   user               = "0"
+    # }
 
     (local.container_name) = {
       cpu       = 512
@@ -162,7 +162,7 @@ module "ecs_service" {
 
   subnet_ids = var.subnet_ids
   security_group_rules = {
-    alb_ingress_3000 = {
+    alb_ingress_8080 = {
       type                     = "ingress"
       from_port                = local.container_port
       to_port                  = local.container_port
@@ -251,23 +251,23 @@ module "ecs_task_definition" {
 
   subnet_ids = var.subnet_ids
 
-  security_group_rules = {
-    alb_ingress_8080 = {
-      type                     = "ingress"
-      from_port                = local.container_port
-      to_port                  = local.container_port
-      protocol                 = "tcp"
-      description              = "Service port"
-      source_security_group_id = module.alb.security_group_id
-    }
-    egress_all = {
-      type        = "egress"
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
+  # security_group_rules = {
+  #   alb_ingress_8080 = {
+  #     type                     = "ingress"
+  #     from_port                = local.container_port
+  #     to_port                  = local.container_port
+  #     protocol                 = "tcp"
+  #     description              = "Service port"
+  #     source_security_group_id = module.alb.security_group_id
+  #   }
+  #   egress_all = {
+  #     type        = "egress"
+  #     from_port   = 0
+  #     to_port     = 0
+  #     protocol    = "-1"
+  #     cidr_blocks = ["0.0.0.0/0"]
+  #   }
+  # }
 
   tags = {
     Name       = local.ecs_task_def_name
@@ -278,9 +278,9 @@ module "ecs_task_definition" {
 # Supporting Resources
 ################################################################################
 
-data "aws_ssm_parameter" "fluentbit" {
-  name = "/aws/service/aws-for-fluent-bit/stable"
-}
+# data "aws_ssm_parameter" "fluentbit" {
+#   name = "/aws/service/aws-for-fluent-bit/stable"
+# }
 
 # resource "aws_service_discovery_http_namespace" "this" {
 #   name        = local.aws_service_discovery_http_namespace
