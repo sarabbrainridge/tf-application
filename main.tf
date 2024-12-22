@@ -200,6 +200,8 @@ module "ecs_task_definition" {
 
   create_task_exec_iam_role = false
 
+  create_task_role = false
+
   tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
 
   task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"

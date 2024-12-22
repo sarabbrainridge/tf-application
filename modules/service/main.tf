@@ -677,7 +677,7 @@ resource "aws_ecs_task_definition" "this" {
   }
 
   skip_destroy  = var.skip_destroy
-  task_role_arn = try(aws_iam_role.tasks[0].arn, var.tasks_iam_role_arn)
+  task_role_arn = var.create_task_role ? try(aws_iam_role.tasks[0].arn, var.tasks_iam_role_arn) : var.tasks_iam_role_arn
 
   dynamic "volume" {
     for_each = var.volume
