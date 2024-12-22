@@ -111,24 +111,24 @@ module "ecs_service" {
       # }]
 
       enable_cloudwatch_logging = false
-      log_configuration = {
-        logDriver = "awsfirelens"
-        options = {
-          Name                    = "firehose"
-          region                  = local.region
-          delivery_stream         = "my-stream"
-          log-driver-buffer-limit = "2097152"
-        }
-      }
+      # log_configuration = {
+      #   logDriver = "awsfirelens"
+      #   options = {
+      #     Name                    = "firehose"
+      #     region                  = local.region
+      #     delivery_stream         = "my-stream"
+      #     log-driver-buffer-limit = "2097152"
+      #   }
+      # }
 
-      linux_parameters = {
-        capabilities = {
-          add = []
-          drop = [
-            "NET_RAW"
-          ]
-        }
-      }
+      # linux_parameters = {
+      #   capabilities = {
+      #     add = []
+      #     drop = [
+      #       "NET_RAW"
+      #     ]
+      #   }
+      # }
 
       # Not required for fluent-bit, just an example
       # volumes_from = [{
