@@ -222,7 +222,9 @@ module "ecs_task_definition" {
     craft_cms_container = {
       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
-      health_check = "CMD-SHELL,curl -f http://localhost:8080/ || exit 1"
+      health_check = {
+            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/health || exit 1"]
+          }
 
       port_mappings = [
         {
