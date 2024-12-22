@@ -105,10 +105,10 @@ module "ecs_service" {
       # Example image used requires access to write to root filesystem
       readonly_root_filesystem = false
 
-      dependencies = [{
-        containerName = (local.container_name)
-        condition     = "START"
-      }]
+      # dependencies = [{
+      #   containerName = (local.container_name)
+      #   condition     = "START"
+      # }]
 
       enable_cloudwatch_logging = false
       log_configuration = {
