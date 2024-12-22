@@ -222,7 +222,7 @@ module "ecs_task_definition" {
     craft_cms_container = {
       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
-      portMappings = [
+      port_mappings = [
         {
           containerPort = 8080
           hostPort      = 8080
