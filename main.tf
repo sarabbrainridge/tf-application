@@ -1,6 +1,6 @@
 ## Adding provider
 provider "aws" {
-  region = local.region
+  region = "ca-central-1"
 }
 
 data "aws_availability_zones" "available" {}
