@@ -11,17 +11,18 @@ data "aws_availability_zones" "available" {}
 
 locals {
   region = "ca-central-1"
-  name   = "ecs-${basename(path.cwd)}-${var.env}-${var.region_short_name}"
+  ecs_cluster_name   = "ecs-cluster-${var.env}-${var.region_short_name}"
+  ecs_service_name   = "ecs-service-${var.env}-${var.region_short_name}"
+  ecs_task_def_name  = "ecs-task-def-${var.env}-${var.region_short_name}"
+  aws_service_discovery_http_namespace = "ecs_sd-${var.env}-${var.region_short_name}"
+  ecs_alb_name      = "ecs-alb-${var.env}-${var.region_short_name}"  
 
   vpc_cidr = "10.128.223.0/24"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs      = slice(data.aws_availability_zones.available.names, 0, 2)
 
-  container_name = "ecsdemo-frontend"
-  container_port = 3000
-  tags = {
-    Name       = local.name
-    Example    = local.name
-  }
+  container_name = "craft-cms-container"
+  container_port = 8080
+
 }
 
 ################################################################################
@@ -32,7 +33,7 @@ module "ecs_cluster" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   source = "./modules/cluster"
 
-  cluster_name = local.name
+  cluster_name = local.ecs_cluster_name
 
   # Capacity provider
   fargate_capacity_providers = {
@@ -49,7 +50,9 @@ module "ecs_cluster" {
     }
   }
 
-  tags = local.tags
+  tags = {
+    Name       = local.ecs_cluster_name
+  }
 }
 
 ################################################################################
@@ -59,7 +62,7 @@ module "ecs_cluster" {
 module "ecs_service" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
   source = "./modules/service"
-  name        = local.name
+  name        = local.ecs_service_name
   cluster_arn = module.ecs_cluster.arn
 
   cpu    = 1024
@@ -178,7 +181,9 @@ module "ecs_service" {
     "ServiceTag" = "Tag on service level"
   }
 
-  tags = local.tags
+  tags = {
+    Name       = local.ecs_service_name
+  }
 }
 
 ################################################################################
@@ -189,7 +194,7 @@ module "ecs_task_definition" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
   source = "./modules/service"
   # Service
-  name           = "${local.name}-standalone"
+  name           = local.ecs_task_def_name
   cluster_arn    = module.ecs_cluster.arn
   create_service = false
 
@@ -206,7 +211,7 @@ module "ecs_task_definition" {
   # Container definition(s)
   container_definitions = {
     al2023 = {
-      image = "public.ecr.aws/amazonlinux/amazonlinux:2023-minimal"
+      image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
       mount_points = [
         {
@@ -223,6 +228,14 @@ module "ecs_task_definition" {
   subnet_ids = var.subnet_ids
 
   security_group_rules = {
+    alb_ingress_8080 = {
+      type                     = "ingress"
+      from_port                = local.container_port
+      to_port                  = local.container_port
+      protocol                 = "tcp"
+      description              = "Service port"
+      source_security_group_id = module.alb.security_group_id
+    }
     egress_all = {
       type        = "egress"
       from_port   = 0
@@ -232,7 +245,9 @@ module "ecs_task_definition" {
     }
   }
 
-  tags = local.tags
+  tags = {
+    Name       = local.ecs_task_def_name
+  }
 }
 
 ################################################################################
@@ -244,16 +259,18 @@ data "aws_ssm_parameter" "fluentbit" {
 }
 
 resource "aws_service_discovery_http_namespace" "this" {
-  name        = local.name
-  description = "CloudMap namespace for ${local.name}"
-  tags        = local.tags
+  name        = local.aws_service_discovery_http_namespace
+  description = "CloudMap namespace for ${local.aws_service_discovery_http_namespace}"
+  tags = {
+    Name       = local.aws_service_discovery_http_namespace
+  }
 }
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 9.0"
 
-  name = local.name
+  name = local.ecs_alb_name
 
   internal = true
 
@@ -271,7 +288,7 @@ module "alb" {
       from_port   = 80
       to_port     = 80
       ip_protocol = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
+      cidr_ipv4   = local.vpc_cidr
     }
   }
   security_group_egress_rules = {
@@ -318,5 +335,7 @@ module "alb" {
     }
   }
 
-  tags = local.tags
+  tags = {
+    Name       = local.ecs_alb_name
+  }
 }
