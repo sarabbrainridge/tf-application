@@ -384,6 +384,12 @@ variable "task_tags" {
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html
 ################################################################################
 
+variable "create_task_role" {
+  description = "Determines whether the ECS task IAM role should be created"
+  type        = bool
+  default     = true
+}
+
 variable "create_task_exec_iam_role" {
   description = "Determines whether the ECS task definition IAM role should be created"
   type        = bool
