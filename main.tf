@@ -24,7 +24,7 @@ locals {
 # Cluster
 ################################################################################
 
-module "ecs_cluster" {
+/* module "ecs_cluster" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   source = "./modules/cluster"
 
@@ -331,3 +331,4 @@ module "vpc" {
 
   tags = local.tags
 }
+*/
