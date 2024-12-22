@@ -106,7 +106,7 @@ module "ecs_service" {
       readonly_root_filesystem = false
 
       dependencies = [{
-        containerName = "fluent-bit"
+        containerName = (local.container_name)
         condition     = "START"
       }]
 
@@ -131,10 +131,10 @@ module "ecs_service" {
       }
 
       # Not required for fluent-bit, just an example
-      volumes_from = [{
-        sourceContainer = "fluent-bit"
-        readOnly        = false
-      }]
+      # volumes_from = [{
+      #   sourceContainer = "fluent-bit"
+      #   readOnly        = false
+      # }]
 
       memory_reservation = 100
     }
