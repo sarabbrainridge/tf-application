@@ -65,6 +65,8 @@ module "ecs_service" {
   name        = local.ecs_service_name
   cluster_arn = module.ecs_cluster.arn
 
+  enable_autoscaling = false
+
   cpu    = 1024
   memory = 4096
 
@@ -138,17 +140,17 @@ module "ecs_service" {
     }
   }
 
-  service_connect_configuration = {
-    namespace = aws_service_discovery_http_namespace.this.arn
-    service = {
-      client_alias = {
-        port     = local.container_port
-        dns_name = local.container_name
-      }
-      port_name      = local.container_name
-      discovery_name = local.container_name
-    }
-  }
+  # service_connect_configuration = {
+  #   namespace = aws_service_discovery_http_namespace.this.arn
+  #   service = {
+  #     client_alias = {
+  #       port     = local.container_port
+  #       dns_name = local.container_name
+  #     }
+  #     port_name      = local.container_name
+  #     discovery_name = local.container_name
+  #   }
+  # }
 
   load_balancer = {
     service = {
@@ -280,13 +282,13 @@ data "aws_ssm_parameter" "fluentbit" {
   name = "/aws/service/aws-for-fluent-bit/stable"
 }
 
-resource "aws_service_discovery_http_namespace" "this" {
-  name        = local.aws_service_discovery_http_namespace
-  description = "CloudMap namespace for ${local.aws_service_discovery_http_namespace}"
-  tags = {
-    Name       = local.aws_service_discovery_http_namespace
-  }
-}
+# resource "aws_service_discovery_http_namespace" "this" {
+#   name        = local.aws_service_discovery_http_namespace
+#   description = "CloudMap namespace for ${local.aws_service_discovery_http_namespace}"
+#   tags = {
+#     Name       = local.aws_service_discovery_http_namespace
+#   }
+# }
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
