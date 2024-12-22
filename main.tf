@@ -5,11 +5,15 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
+# data "aws_vpc" "craft_vpc_id" {
+#   id = var.vpc_id
+# }
+
 locals {
   region = "ca-central-1"
   name   = "ecs-${basename(path.cwd)}-${var.env}-${var.region_short_name}"
 
-  vpc_cidr = "10.0.0.0/16"
+  vpc_cidr = "10.128.223.0/24"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
   container_name = "ecsdemo-frontend"
@@ -145,13 +149,13 @@ module "ecs_service" {
 
   load_balancer = {
     service = {
-      target_group_arn = module.alb.target_groups["ex_ecs"].arn
+      target_group_arn = module.alb.target_groups["craft_cms_ecs"].arn
       container_name   = local.container_name
       container_port   = local.container_port
     }
   }
 
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids = var.subnet_ids
   security_group_rules = {
     alb_ingress_3000 = {
       type                     = "ingress"
@@ -216,7 +220,7 @@ module "ecs_task_definition" {
     }
   }
 
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids = var.subnet_ids
 
   security_group_rules = {
     egress_all = {
@@ -253,8 +257,8 @@ module "alb" {
 
   load_balancer_type = "application"
 
-  vpc_id  = module.vpc.vpc_id
-  subnets = module.vpc.public_subnets
+  vpc_id  = var.vpc_id
+  subnets = var.subnet_ids
 
   # For example only
   enable_deletion_protection = false
@@ -271,7 +275,7 @@ module "alb" {
   security_group_egress_rules = {
     all = {
       ip_protocol = "-1"
-      cidr_ipv4   = module.vpc.vpc_cidr_block
+      cidr_ipv4   = local.vpc_cidr
     }
   }
 
@@ -281,13 +285,13 @@ module "alb" {
       protocol = "HTTP"
 
       forward = {
-        target_group_key = "ex_ecs"
+        target_group_key = "craft_cms_ecs"
       }
     }
   }
 
   target_groups = {
-    ex_ecs = {
+    craft_cms_ecs = {
       backend_protocol                  = "HTTP"
       backend_port                      = local.container_port
       target_type                       = "ip"
@@ -311,23 +315,6 @@ module "alb" {
       create_attachment = false
     }
   }
-
-  tags = local.tags
-}
-
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
-
-  name = local.name
-  cidr = local.vpc_cidr
-
-  azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
-
-  enable_nat_gateway = true
-  single_nat_gateway = true
 
   tags = local.tags
 }
