@@ -1,3 +1,4 @@
+## Adding provider
 provider "aws" {
   region = local.region
 }
