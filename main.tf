@@ -344,7 +344,7 @@ module "alb" {
       health_check = {
         enabled             = true
         healthy_threshold   = 5
-        interval            = 30
+        interval            = 40
         matcher             = "200"
         path                = "/"
         port                = "traffic-port"
