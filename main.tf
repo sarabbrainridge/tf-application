@@ -73,26 +73,24 @@ module "ecs_service" {
   # Enables ECS Exec
   enable_execute_command = true
 
+  create_task_exec_iam_role = false
+  create_task_role = false
+  tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
+  task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
+
+  runtime_platform = {
+    cpu_architecture        = "X86_64"
+    operating_system_family = "LINUX"
+  }
+
   # Container definition(s)
   container_definitions = {
 
   health_check = {
-            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
+    command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
   }
 
-    # fluent-bit = {
-    #   cpu       = 512
-    #   memory    = 1024
-    #   essential = true
-    #   image     = nonsensitive(data.aws_ssm_parameter.fluentbit.value)
-    #   firelens_configuration = {
-    #     type = "fluentbit"
-    #   }
-    #   memory_reservation = 50
-    #   user               = "0"
-    # }
-
-    (local.container_name) = {
+  (local.container_name) = {
       cpu       = 512
       memory    = 1024
       essential = true
@@ -108,11 +106,6 @@ module "ecs_service" {
 
       # Example image used requires access to write to root filesystem
       readonly_root_filesystem = false
-
-      # dependencies = [{
-      #   containerName = (local.container_name)
-      #   condition     = "START"
-      # }]
 
       enable_cloudwatch_logging = false
       # log_configuration = {
@@ -144,18 +137,6 @@ module "ecs_service" {
     }
   }
 
-  # service_connect_configuration = {
-  #   namespace = aws_service_discovery_http_namespace.this.arn
-  #   service = {
-  #     client_alias = {
-  #       port     = local.container_port
-  #       dns_name = local.container_name
-  #     }
-  #     port_name      = local.container_name
-  #     discovery_name = local.container_name
-  #   }
-  # }
-
   load_balancer = {
     service = {
       target_group_arn = module.alb.target_groups["craft_cms_ecs"].arn
@@ -174,14 +155,6 @@ module "ecs_service" {
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
     }
-    # alb_ingress_443 = {
-    #   type                     = "ingress"
-    #   from_port                = 443
-    #   to_port                  = 443
-    #   protocol                 = "tcp"
-    #   description              = "Service port"
-    #   cidr_ipv4               = local.vpc_cidr
-    # }
     egress_all = {
       type        = "egress"
       from_port   = 0
@@ -204,7 +177,7 @@ module "ecs_service" {
 # Standalone Task Definition (w/o Service)
 ################################################################################
 
-module "ecs_task_definition" {
+/* module "ecs_task_definition" {
   //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
   source = "./modules/service"
   # Service
@@ -293,22 +266,7 @@ module "ecs_task_definition" {
     Name       = local.ecs_task_def_name
   }
 }
-
-################################################################################
-# Supporting Resources
-################################################################################
-
-# data "aws_ssm_parameter" "fluentbit" {
-#   name = "/aws/service/aws-for-fluent-bit/stable"
-# }
-
-# resource "aws_service_discovery_http_namespace" "this" {
-#   name        = local.aws_service_discovery_http_namespace
-#   description = "CloudMap namespace for ${local.aws_service_discovery_http_namespace}"
-#   tags = {
-#     Name       = local.aws_service_discovery_http_namespace
-#   }
-# }
+*/
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
