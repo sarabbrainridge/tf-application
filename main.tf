@@ -111,15 +111,15 @@ module "ecs_service" {
       # }]
 
       enable_cloudwatch_logging = false
-      # log_configuration = {
-      #   logDriver = "awsfirelens"
-      #   options = {
-      #     Name                    = "firehose"
-      #     region                  = local.region
-      #     delivery_stream         = "my-stream"
-      #     log-driver-buffer-limit = "2097152"
-      #   }
-      # }
+      log_configuration = {
+        logDriver = "awsvpc"
+        options = {
+          Name                    = "firehose"
+          region                  = local.region
+          delivery_stream         = "my-stream"
+          log-driver-buffer-limit = "2097152"
+        }
+      }
 
       # linux_parameters = {
       #   capabilities = {
@@ -215,7 +215,7 @@ module "ecs_task_definition" {
   # }
 
   runtime_platform = {
-    cpu_architecture        = "ARM64"
+    cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
   }
 
