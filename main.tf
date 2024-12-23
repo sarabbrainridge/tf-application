@@ -30,7 +30,6 @@ locals {
 ################################################################################
 
 module "ecs_cluster" {
-  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   source = "./modules/cluster"
 
   cluster_name = local.ecs_cluster_name
@@ -76,6 +75,10 @@ module "ecs_service" {
   # Container definition(s)
   container_definitions = {
 
+      health_check = {
+            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
+          }
+
     (local.container_name) = {
       cpu       = 512
       memory    = 1024
@@ -94,46 +97,10 @@ module "ecs_service" {
       readonly_root_filesystem = false
 
       enable_cloudwatch_logging = true
-      # log_configuration = {
-      #   logDriver = "awslogs"
-      #   options = {
-      #     Name                    = "firehose"
-      #     region                  = local.region
-      #     delivery_stream         = "my-stream"
-      #     log-driver-buffer-limit = "2097152"
-      #   }
-      # }
-
-      # linux_parameters = {
-      #   capabilities = {
-      #     add = []
-      #     drop = [
-      #       "NET_RAW"
-      #     ]
-      #   }
-      # }
-
-      # Not required for fluent-bit, just an example
-      # volumes_from = [{
-      #   sourceContainer = "fluent-bit"
-      #   readOnly        = false
-      # }]
 
       memory_reservation = 100
     }
   }
-
-  # service_connect_configuration = {
-  #   namespace = aws_service_discovery_http_namespace.this.arn
-  #   service = {
-  #     client_alias = {
-  #       port     = local.container_port
-  #       dns_name = local.container_name
-  #     }
-  #     port_name      = local.container_name
-  #     discovery_name = local.container_name
-  #   }
-  # }
 
   load_balancer = {
     service = {
@@ -153,14 +120,6 @@ module "ecs_service" {
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
     }
-    # alb_ingress_443 = {
-    #   type                     = "ingress"
-    #   from_port                = 443
-    #   to_port                  = 443
-    #   protocol                 = "tcp"
-    #   description              = "Service port"
-    #   cidr_ipv4               = local.vpc_cidr
-    # }
     egress_all = {
       type        = "egress"
       from_port   = 0
@@ -184,7 +143,6 @@ module "ecs_service" {
 ################################################################################
 
 module "ecs_task_definition" {
-  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
   source = "./modules/service"
   # Service
   name           = local.ecs_task_def_name
@@ -198,13 +156,6 @@ module "ecs_task_definition" {
   tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
 
   task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
-
-
-  # Task Definition
-  # volume = {
-  #   ex-vol = {}
-  # }
-
   runtime_platform = {
     cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
@@ -227,67 +178,15 @@ module "ecs_task_definition" {
           protocol      = "tcp"
         }
       ]
-
-      # mount_points = [
-      #   {
-      #     sourceVolume  = "ex-vol",
-      #     containerPath = "/var/www/ex-vol"
-      #   }
-      # ]
-
-      # command    = ["echo hello world"]
-      # entrypoint = ["/usr/bin/sh", "-c"]
     }
   }
 
   subnet_ids = var.subnet_ids
 
-  # security_group_rules = {
-  #   alb_ingress_8080 = {
-  #     type                     = "ingress"
-  #     from_port                = local.container_port
-  #     to_port                  = local.container_port
-  #     protocol                 = "tcp"
-  #     description              = "Service port"
-  #     source_security_group_id = module.alb.security_group_id
-  #   }
-  #   alb_ingress_443 = {
-  #     type                     = "ingress"
-  #     from_port                = 443
-  #     to_port                  = 443
-  #     protocol                 = "tcp"
-  #     description              = "Service port"
-  #     cidr_ipv4                = local.vpc_cidr
-  #   }
-  #   egress_all = {
-  #     type        = "egress"
-  #     from_port   = 0
-  #     to_port     = 0
-  #     protocol    = "-1"
-  #     cidr_blocks = ["0.0.0.0/0"]
-  #   }
-  # }
-
   tags = {
     Name       = local.ecs_task_def_name
   }
 }
-
-################################################################################
-# Supporting Resources
-################################################################################
-
-# data "aws_ssm_parameter" "fluentbit" {
-#   name = "/aws/service/aws-for-fluent-bit/stable"
-# }
-
-# resource "aws_service_discovery_http_namespace" "this" {
-#   name        = local.aws_service_discovery_http_namespace
-#   description = "CloudMap namespace for ${local.aws_service_discovery_http_namespace}"
-#   tags = {
-#     Name       = local.aws_service_discovery_http_namespace
-#   }
-# }
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
