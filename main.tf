@@ -76,6 +76,10 @@ module "ecs_service" {
   # Container definition(s)
   container_definitions = {
 
+  health_check = {
+            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
+  }
+
     # fluent-bit = {
     #   cpu       = 512
     #   memory    = 1024
