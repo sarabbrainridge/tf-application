@@ -324,7 +324,7 @@ module "alb" {
 
   listeners = {
     ex_http = {
-      port     = 80
+      port     = 8080
       protocol = "HTTP"
 
       forward = {
