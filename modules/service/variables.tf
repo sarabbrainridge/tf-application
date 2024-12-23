@@ -65,7 +65,7 @@ variable "deployment_maximum_percent" {
 variable "deployment_minimum_healthy_percent" {
   description = "Lower limit (as a percentage of the service's `desired_count`) of the number of running tasks that must remain running and healthy in a service during a deployment"
   type        = number
-  default     = 66
+  default     = 100
 }
 
 variable "desired_count" {

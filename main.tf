@@ -11,17 +11,13 @@ data "aws_availability_zones" "available" {}
 
 locals {
   region = "ca-central-1"
-  ecs_cluster_name   = "ecs-cluster-${var.env}-${var.region_short_name}"
-  ecs_service_name   = "ecs-service-${var.env}-${var.region_short_name}"
-  ecs_task_def_name  = "ecs-task-def-${var.env}-${var.region_short_name}"
-  aws_service_discovery_http_namespace = "ecs_sd-${var.env}-${var.region_short_name}"
-  ecs_alb_name      = "ecs-alb-${var.env}-${var.region_short_name}"  
-
-  vpc_cidr = "10.128.223.0/24"
+  ecs_cluster_name   = "${var.website}-ecs-cluster-${var.env}-${var.region_short_name}"
+  ecs_service_name   = "${var.website}-ecs-service-${var.env}-${var.region_short_name}"
+  ecs_task_def_name  = "${var.website}-ecs-task-def-${var.env}-${var.region_short_name}"
+  aws_service_discovery_http_namespace = "${var.website}-ecs_sd-${var.env}-${var.region_short_name}"
+  ecs_alb_name      = "${var.website}-ecs-alb-${var.env}-${var.region_short_name}"  
   azs      = slice(data.aws_availability_zones.available.names, 0, 2)
-
-  container_name = "craft-cms-container"
-  container_port = 8080
+  container_name = "${var.website}-craft-cms-container"
 
 }
 
@@ -70,33 +66,33 @@ module "ecs_service" {
   memory = 4096
 
   # Enables ECS Exec
-  enable_execute_command = true
+  enable_execute_command = var.enable_execute_command
 
   # Container definition(s)
   container_definitions = {
-
-      health_check = {
-            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
-          }
 
     (local.container_name) = {
       cpu       = 512
       memory    = 1024
       essential = true
-      image     = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
+      image     = var.ecs_containerimage
       port_mappings = [
         {
           name          = local.container_name
-          containerPort = local.container_port
-          hostPort      = local.container_port
+          containerPort = var.container_port
+          hostPort      = var.container_port
           protocol      = "tcp"
         }
       ]
 
-      # Example image used requires access to write to root filesystem
-      readonly_root_filesystem = false
+      health_check = {
+            command = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/ || exit 1"]
+          }
 
-      enable_cloudwatch_logging = true
+      # Example image used requires access to write to root filesystem
+      #readonly_root_filesystem = false
+
+      enable_cloudwatch_logging = var.enable_cloudwatch_logging
 
       memory_reservation = 100
     }
@@ -106,7 +102,7 @@ module "ecs_service" {
     service = {
       target_group_arn = module.alb.target_groups["craft_cms_ecs"].arn
       container_name   = local.container_name
-      container_port   = local.container_port
+      container_port   = var.container_port
     }
   }
 
@@ -114,8 +110,8 @@ module "ecs_service" {
   security_group_rules = {
     alb_ingress_8080 = {
       type                     = "ingress"
-      from_port                = local.container_port
-      to_port                  = local.container_port
+      from_port                = var.container_port
+      to_port                  = var.container_port
       protocol                 = "tcp"
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
@@ -142,51 +138,51 @@ module "ecs_service" {
 # Standalone Task Definition (w/o Service)
 ################################################################################
 
-module "ecs_task_definition" {
-  source = "./modules/service"
-  # Service
-  name           = local.ecs_task_def_name
-  cluster_arn    = module.ecs_cluster.arn
-  create_service = false
+# module "ecs_task_definition" {
+#   source = "./modules/service"
+#   # Service
+#   name           = local.ecs_task_def_name
+#   cluster_arn    = module.ecs_cluster.arn
+#   create_service = false
 
-  create_task_exec_iam_role = false
+#   create_task_exec_iam_role = false
 
-  create_task_role = false
+#   create_task_role = false
 
-  tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
+#   tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
 
-  task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
-  runtime_platform = {
-    cpu_architecture        = "X86_64"
-    operating_system_family = "LINUX"
-  }
+#   task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
+#   runtime_platform = {
+#     cpu_architecture        = "X86_64"
+#     operating_system_family = "LINUX"
+#   }
 
-  # Container definition(s)
-  container_definitions = {
-    craft_cms_container = {
-      image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
+#   # Container definition(s)
+#   container_definitions = {
+#     craft_cms_container = {
+#       image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
 
-      health_check = {
-            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
-          }
+#       health_check = {
+#             command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
+#           }
 
-      port_mappings = [
-        {
-          containerPort = 8080
-          hostPort      = 8080
-          name          = "craftcms-8080-tcp"
-          protocol      = "tcp"
-        }
-      ]
-    }
-  }
+#       port_mappings = [
+#         {
+#           containerPort = 8080
+#           hostPort      = 8080
+#           name          = "craftcms-8080-tcp"
+#           protocol      = "tcp"
+#         }
+#       ]
+#     }
+#   }
 
-  subnet_ids = var.subnet_ids
+#   subnet_ids = var.subnet_ids
 
-  tags = {
-    Name       = local.ecs_task_def_name
-  }
-}
+#   tags = {
+#     Name       = local.ecs_task_def_name
+#   }
+# }
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
@@ -210,13 +206,13 @@ module "alb" {
       from_port   = 80
       to_port     = 80
       ip_protocol = "tcp"
-      cidr_ipv4   = local.vpc_cidr
+      cidr_ipv4   = var.vpc_cidr
     }
   }
   security_group_egress_rules = {
     all = {
       ip_protocol = "-1"
-      cidr_ipv4   = local.vpc_cidr
+      cidr_ipv4   = var.vpc_cidr
     }
   }
 
@@ -242,7 +238,7 @@ module "alb" {
       health_check = {
         enabled             = true
         healthy_threshold   = 5
-        interval            = 40
+        interval            = 30
         matcher             = "200"
         path                = "/"
         port                = "traffic-port"

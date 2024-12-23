@@ -54,3 +54,8 @@ variable "enable_execute_command" {
   type = bool
   default = true
 }
+
+variable "website" {
+  description = "Describing the website for intact application"
+  default = "servus"
+}
