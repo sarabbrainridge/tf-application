@@ -5,10 +5,6 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
-# data "aws_vpc" "craft_vpc_id" {
-#   id = var.vpc_id
-# }
-
 locals {
   region = "ca-central-1"
   ecs_cluster_name   = "ecs-cluster-${var.env}-${var.region_short_name}"
@@ -17,11 +13,9 @@ locals {
   aws_service_discovery_http_namespace = "ecs_sd-${var.env}-${var.region_short_name}"
   ecs_alb_name      = "ecs-alb-${var.env}-${var.region_short_name}"  
 
-  vpc_cidr = "10.128.223.0/24"
   azs      = slice(data.aws_availability_zones.available.names, 0, 2)
 
   container_name = "craft-cms-container"
-  container_port = 8080
 
 }
 
@@ -30,25 +24,9 @@ locals {
 ################################################################################
 
 module "ecs_cluster" {
-  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/cluster?ref=main"
   source = "./modules/cluster"
 
   cluster_name = local.ecs_cluster_name
-
-  # Capacity provider
-  fargate_capacity_providers = {
-    FARGATE = {
-      default_capacity_provider_strategy = {
-        weight = 50
-        base   = 20
-      }
-    }
-    FARGATE_SPOT = {
-      default_capacity_provider_strategy = {
-        weight = 50
-      }
-    }
-  }
 
   tags = {
     Name       = local.ecs_cluster_name
@@ -60,78 +38,38 @@ module "ecs_cluster" {
 ################################################################################
 
 module "ecs_service" {
-  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
   source = "./modules/service"
   name        = local.ecs_service_name
   cluster_arn = module.ecs_cluster.arn
 
-  enable_autoscaling = false
+  enable_autoscaling = var.enable_autoscaling
 
   cpu    = 1024
-  memory = 4096
+  memory = 3072
 
   # Enables ECS Exec
   enable_execute_command = true
 
-  create_task_exec_iam_role = false
-  create_task_role = false
-  tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
-  task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
-
-  runtime_platform = {
-    cpu_architecture        = "X86_64"
-    operating_system_family = "LINUX"
-  }
-
   # Container definition(s)
   container_definitions = {
 
-  health_check = {
-    command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
-  }
-
-  (local.container_name) = {
-      cpu       = 512
-      memory    = 1024
+    (local.container_name) = {
       essential = true
-      image     = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
+      image     = var.ecs_containerimage
       port_mappings = [
         {
           name          = local.container_name
-          containerPort = local.container_port
-          hostPort      = local.container_port
+          containerPort = var.container_port
+          hostPort      = var.container_port
           protocol      = "tcp"
         }
       ]
 
-      # Example image used requires access to write to root filesystem
-      readonly_root_filesystem = false
+    health_check = {
+      command = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/ || exit 1"]
+    }
 
-      enable_cloudwatch_logging = false
-      # log_configuration = {
-      #   logDriver = "awslogs"
-      #   options = {
-      #     Name                    = "firehose"
-      #     region                  = local.region
-      #     delivery_stream         = "my-stream"
-      #     log-driver-buffer-limit = "2097152"
-      #   }
-      # }
-
-      # linux_parameters = {
-      #   capabilities = {
-      #     add = []
-      #     drop = [
-      #       "NET_RAW"
-      #     ]
-      #   }
-      # }
-
-      # Not required for fluent-bit, just an example
-      # volumes_from = [{
-      #   sourceContainer = "fluent-bit"
-      #   readOnly        = false
-      # }]
+      enable_cloudwatch_logging = var.enable_cloudwatch_logging
 
       memory_reservation = 100
     }
@@ -141,7 +79,7 @@ module "ecs_service" {
     service = {
       target_group_arn = module.alb.target_groups["craft_cms_ecs"].arn
       container_name   = local.container_name
-      container_port   = local.container_port
+      container_port   = var.container_port
     }
   }
 
@@ -149,8 +87,8 @@ module "ecs_service" {
   security_group_rules = {
     alb_ingress_8080 = {
       type                     = "ingress"
-      from_port                = local.container_port
-      to_port                  = local.container_port
+      from_port                = var.container_port
+      to_port                  = var.container_port
       protocol                 = "tcp"
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
@@ -173,101 +111,6 @@ module "ecs_service" {
   }
 }
 
-################################################################################
-# Standalone Task Definition (w/o Service)
-################################################################################
-
-/* module "ecs_task_definition" {
-  //source = "git::https://github.com/sarabbrainridge/terraform-modules.git//modules/service?ref=main"
-  source = "./modules/service"
-  # Service
-  name           = local.ecs_task_def_name
-  cluster_arn    = module.ecs_cluster.arn
-  create_service = false
-
-  create_task_exec_iam_role = false
-
-  create_task_role = false
-
-  tasks_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-role"
-
-  task_exec_iam_role_arn = "arn:aws:iam::864899849560:role/man-ecs-task-execution-role"
-
-
-  # Task Definition
-  # volume = {
-  #   ex-vol = {}
-  # }
-
-  runtime_platform = {
-    cpu_architecture        = "X86_64"
-    operating_system_family = "LINUX"
-  }
-
-  # Container definition(s)
-  container_definitions = {
-    craft_cms_container = {
-      image = "864899849560.dkr.ecr.ca-central-1.amazonaws.com/craftcms:craftcms-package-8.4-latest"
-
-      health_check = {
-            command = ["CMD-SHELL", "curl -f http://localhost:${local.container_port}/ || exit 1"]
-          }
-
-      port_mappings = [
-        {
-          containerPort = 8080
-          hostPort      = 8080
-          name          = "craftcms-8080-tcp"
-          protocol      = "tcp"
-        }
-      ]
-
-      # mount_points = [
-      #   {
-      #     sourceVolume  = "ex-vol",
-      #     containerPath = "/var/www/ex-vol"
-      #   }
-      # ]
-
-      # command    = ["echo hello world"]
-      # entrypoint = ["/usr/bin/sh", "-c"]
-    }
-  }
-
-  subnet_ids = var.subnet_ids
-
-  # security_group_rules = {
-  #   alb_ingress_8080 = {
-  #     type                     = "ingress"
-  #     from_port                = local.container_port
-  #     to_port                  = local.container_port
-  #     protocol                 = "tcp"
-  #     description              = "Service port"
-  #     source_security_group_id = module.alb.security_group_id
-  #   }
-  #   alb_ingress_443 = {
-  #     type                     = "ingress"
-  #     from_port                = 443
-  #     to_port                  = 443
-  #     protocol                 = "tcp"
-  #     description              = "Service port"
-  #     cidr_ipv4                = local.vpc_cidr
-  #   }
-  #   egress_all = {
-  #     type        = "egress"
-  #     from_port   = 0
-  #     to_port     = 0
-  #     protocol    = "-1"
-  #     cidr_blocks = ["0.0.0.0/0"]
-  #   }
-  # }
-
-  tags = {
-    Name       = local.ecs_task_def_name
-  }
-}
-*/
-
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 9.0"
@@ -281,7 +124,6 @@ module "alb" {
   vpc_id  = var.vpc_id
   subnets = var.subnet_ids
 
-  # For example only
   enable_deletion_protection = false
 
   # Security Group
@@ -290,13 +132,13 @@ module "alb" {
       from_port   = 80
       to_port     = 80
       ip_protocol = "tcp"
-      cidr_ipv4   = local.vpc_cidr
+      cidr_ipv4   = var.vpc_cidr
     }
   }
   security_group_egress_rules = {
     all = {
       ip_protocol = "-1"
-      cidr_ipv4   = local.vpc_cidr
+      cidr_ipv4   = var.vpc_cidr
     }
   }
 

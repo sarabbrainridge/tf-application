@@ -821,6 +821,16 @@ data "aws_iam_policy_document" "task_exec" {
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
       "ecr:BatchGetImage",
+      "ecr:BatchImportUpstreamImage",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:DescribeImages",
+      "ecr:GetLifecyclePolicy",
+      "ecr:GetLifecyclePolicyPreview",
+      "ecr:ListTagsForResource",
+      "ecr:DescribeImageScanFindings",
+      "secretsmanager:GetSecretValue"
     ]
     resources = ["*"]
   }
@@ -973,10 +983,20 @@ data "aws_iam_policy_document" "tasks" {
     content {
       sid = "ECSExec"
       actions = [
-        "ssmmessages:CreateControlChannel",
-        "ssmmessages:CreateDataChannel",
-        "ssmmessages:OpenControlChannel",
-        "ssmmessages:OpenDataChannel",
+        "ecr:GetAuthorizationToken",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchImportUpstreamImage",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:DescribeImages",
+        "ecr:BatchGetImage",
+        "ecr:GetLifecyclePolicy",
+        "ecr:GetLifecyclePolicyPreview",
+        "ecr:ListTagsForResource",
+        "ecr:DescribeImageScanFindings",
+        "secretsmanager:GetSecretValue"
       ]
       resources = ["*"]
     }
