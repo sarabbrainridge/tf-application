@@ -170,6 +170,14 @@ module "ecs_service" {
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
     }
+    alb_ingress_443 = {
+      type                     = "ingress"
+      from_port                = 443
+      to_port                  = 443
+      protocol                 = "tcp"
+      description              = "Service port"
+      cidr_ipv4                = local.vpc_cidr
+    }
     egress_all = {
       type        = "egress"
       from_port   = 0
@@ -251,23 +259,31 @@ module "ecs_task_definition" {
 
   subnet_ids = var.subnet_ids
 
-  security_group_rules = {
-    alb_ingress_8080 = {
-      type                     = "ingress"
-      from_port                = local.container_port
-      to_port                  = local.container_port
-      protocol                 = "tcp"
-      description              = "Service port"
-      source_security_group_id = module.alb.security_group_id
-    }
-    egress_all = {
-      type        = "egress"
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
+  # security_group_rules = {
+  #   alb_ingress_8080 = {
+  #     type                     = "ingress"
+  #     from_port                = local.container_port
+  #     to_port                  = local.container_port
+  #     protocol                 = "tcp"
+  #     description              = "Service port"
+  #     source_security_group_id = module.alb.security_group_id
+  #   }
+  #   alb_ingress_443 = {
+  #     type                     = "ingress"
+  #     from_port                = 443
+  #     to_port                  = 443
+  #     protocol                 = "tcp"
+  #     description              = "Service port"
+  #     cidr_ipv4                = local.vpc_cidr
+  #   }
+  #   egress_all = {
+  #     type        = "egress"
+  #     from_port   = 0
+  #     to_port     = 0
+  #     protocol    = "-1"
+  #     cidr_blocks = ["0.0.0.0/0"]
+  #   }
+  # }
 
   tags = {
     Name       = local.ecs_task_def_name
