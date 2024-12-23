@@ -112,7 +112,7 @@ module "ecs_service" {
 
       enable_cloudwatch_logging = false
       # log_configuration = {
-      #   logDriver = "awsvpc"
+      #   logDriver = "awslogs"
       #   options = {
       #     Name                    = "firehose"
       #     region                  = local.region
@@ -170,14 +170,14 @@ module "ecs_service" {
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
     }
-    alb_ingress_443 = {
-      type                     = "ingress"
-      from_port                = 443
-      to_port                  = 443
-      protocol                 = "tcp"
-      description              = "Service port"
-      cidr_ipv4                = local.vpc_cidr
-    }
+    # alb_ingress_443 = {
+    #   type                     = "ingress"
+    #   from_port                = 443
+    #   to_port                  = 443
+    #   protocol                 = "tcp"
+    #   description              = "Service port"
+    #   cidr_ipv4               = local.vpc_cidr
+    # }
     egress_all = {
       type        = "egress"
       from_port   = 0
