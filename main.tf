@@ -111,15 +111,15 @@ module "ecs_service" {
       # }]
 
       enable_cloudwatch_logging = false
-      log_configuration = {
-        logDriver = "awsvpc"
-        options = {
-          Name                    = "firehose"
-          region                  = local.region
-          delivery_stream         = "my-stream"
-          log-driver-buffer-limit = "2097152"
-        }
-      }
+      # log_configuration = {
+      #   logDriver = "awsvpc"
+      #   options = {
+      #     Name                    = "firehose"
+      #     region                  = local.region
+      #     delivery_stream         = "my-stream"
+      #     log-driver-buffer-limit = "2097152"
+      #   }
+      # }
 
       # linux_parameters = {
       #   capabilities = {
